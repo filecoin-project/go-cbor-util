@@ -14,6 +14,7 @@ import (
 
 var log = logging.Logger("cborrrpc")
 
+// Debug will produce more debugging messages
 const Debug = false
 
 func init() {
@@ -22,6 +23,8 @@ func init() {
 	}
 }
 
+// WriteCborRPC with encode an object to cbor, opting for fast path if possible
+// and then write it into the given io.Writer
 func WriteCborRPC(w io.Writer, obj interface{}) error {
 	if m, ok := obj.(cbg.CBORMarshaler); ok {
 		// TODO: impl debug
@@ -40,6 +43,8 @@ func WriteCborRPC(w io.Writer, obj interface{}) error {
 	return err
 }
 
+// ReadCborRPC will read an object from the given io.Reader
+// opting for fast path if possible
 func ReadCborRPC(r io.Reader, out interface{}) error {
 	if um, ok := out.(cbg.CBORUnmarshaler); ok {
 		return um.UnmarshalCBOR(r)
@@ -47,6 +52,7 @@ func ReadCborRPC(r io.Reader, out interface{}) error {
 	return cbor.DecodeReader(r, out)
 }
 
+// Dump returns the cbor bytes representation of an object
 func Dump(obj interface{}) ([]byte, error) {
 	var out bytes.Buffer
 	if err := WriteCborRPC(&out, obj); err != nil {
@@ -55,6 +61,7 @@ func Dump(obj interface{}) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+// AsIpld converts an object to an ipld.Node interface
 // TODO: this is a bit ugly, and this package is not exactly the best place
 func AsIpld(obj interface{}) (ipld.Node, error) {
 	if m, ok := obj.(cbg.CBORMarshaler); ok {
@@ -67,6 +74,7 @@ func AsIpld(obj interface{}) (ipld.Node, error) {
 	return cbor.WrapObject(obj, math.MaxUint64, -1)
 }
 
+// Equals is true if two objects have the same cbor representation
 func Equals(a cbg.CBORMarshaler, b cbg.CBORMarshaler) (bool, error) {
 	ab, err := Dump(a)
 	if err != nil {
